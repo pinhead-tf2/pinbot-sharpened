@@ -18,16 +18,19 @@ bot = commands.Bot(
     activity=discord.Game(name="Initializing...")
 )
 bot.startTime = time.time()
+bot.version = 'Indev'
+bot.releaseDate = 'Undetermined'
 
 async def initialize():
     await bot.wait_until_ready()
     bot.db = await aiosqlite.connect('storage.sqlite')
     await bot.change_presence(activity=discord.Game('Good morning, World!'), status=discord.Status.online)
-    print(f"{bot.user} ({bot.user.id}) is fully online\nTime to finish: " + str((time.time() - bot.startTime)))
+    print("{} ({}) is fully online\nTime to finish: {}".format(bot.user, bot.user.id, round(time.time() - bot.startTime, 3)))
+    # self.change_stats.start()
 
 @bot.event
 async def on_ready():
-    print(f"{bot.user} ({bot.user.id}) is ready\nTime to ready: " + str((time.time() - bot.startTime)))
+    print("{} ({}) is ready\nTime to ready: {}".format(bot.user, bot.user.id, round(time.time() - bot.startTime, 3)))
     
 class helpMe(commands.HelpCommand):
     def get_command_signature(self, command):
@@ -41,8 +44,9 @@ class helpMe(commands.HelpCommand):
            if command_signatures:
                 cog_name = getattr(cog, "qualified_name", "No Category")
                 embed.add_field(name=cog_name, value="\n".join(command_signatures), inline=False)
+        embed.set_footer(text="Created by pinhead#4946 | {} released {}".format(bot.version, bot.releaseDate))
         channel = self.get_destination()
-        await channel.send(embed=embed)
+        return await channel.send(embed=embed)
     
     async def send_command_help(self, command):
         embed = discord.Embed(title=self.get_command_signature(command))
@@ -51,10 +55,12 @@ class helpMe(commands.HelpCommand):
         if alias:
             embed.add_field(name="Aliases", value=", ".join(alias), inline=False)
         channel = self.get_destination()
-        await channel.send(embed=embed)
-    
+        return await channel.send(embed=embed)
+
 cogs_list = [
     'Core.Core',
+    'Helpful.Helpful',
+    'Statuses.Statuses'
 ]
 
 for cog in cogs_list:
