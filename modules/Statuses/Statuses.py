@@ -1,47 +1,49 @@
-import discord, datetime, time, platform, cpuinfo, psutil, asyncio
-from discord.ext import commands
+import discord, datetime, time, platform, cpuinfo, psutil, asyncio, aiosqlite
+from discord.ext import commands, tasks
+
+type_cache = []
+statustext_cache = []
 
 class Statuses(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         print("Statuses initialized")
+        self.statusLoop.start()
         
-    # @commands.Cog.listener()
-    # async def on_ready(self):
+    def cog_unload(self):
+        self.statuses.cancel()
         
-    @commands.command(help="Toggles between splash or resource statuses. Defaults `false` for splashes.")
-    @commands.cooldown(1, 15, commands.BucketType.guild)
-    async def resourceStatus(self, ctx, newStatus):
-        if newStatus.lower() == 'true':
-            print('Resource')
-        elif newStatus.lower() == 'false':
-            print('Splash')
-        else:
-            print('Error')
+    @tasks.loop(minutes=1.0)
+    async def statusLoop(self):
+        print("Status")
+
+    @statusLoop.before_loop
+    async def beforeReady(self):
+        await self.bot.wait_until_ready()
+        db = self.bot.db
+        db.row_factory = aiosqlite.Row
+        async with db.execute("SELECT * FROM statuses") as cursor:
+            print(cursor.fetchone())
             
-    @commands.Cog.listener()
-    async def on_command_error(self, ctx: commands.Context, error: commands.CommandError):
-        if isinstance(error, commands.CommandOnCooldown):
-            embed = discord.Embed(title="Command Execution Error", color=0xff0000)
-            embed.add_field(name="Cooldown Isn't Expired", value="The command `{}` is still on cooldown! You have to wait **{} more seconds** before using this command. ({} second cooldown)".format(ctx.command, round(error.retry_after, 1), ctx.command.cooldown.per))
-            embed.set_footer(text=str(error))
-            return await ctx.reply(embed=embed)
+    @commands.command(help="Adds a status to the bot's status database. Only usable by the owner.")
+    @commands.is_owner()
+    async def addstatus(self, ctx, type, *, statustext):
+        type = type.lower()
+        if type == "playing":
+            type = discord.ActivityType.playing
+        elif type == "listening":
+            type = discord.ActivityType.listening
+        elif type == "watching":
+            type = discord.ActivityType.watching
         else:
-            embed = discord.Embed(title="Command Execution Error", color=0xff0000)
-            embed.add_field(name="Unhandled Error", value="Whoops, looks like pinhead hasn't yet coded an exception for this kind of error! I've notified him, so please be patient on waiting for a bug fix!")
-            embed.set_footer(text=str(error))
-            await ctx.reply(embed=embed)
-            embed = discord.Embed(title="Command Execution Error - DM Report", color=0xff0000)
-            embed.add_field(name="New Unhandled Error", value="**Command:** {}\n**Ran by:** {} ({})\n**Error Type:** `{}`\n**Link:** {}".format(
-                ctx.command,
-                ctx.author.mention,
-                ctx.author.name + "#" + ctx.author.discriminator,
-                str(error),
-                ctx.message.jump_url
-            ))
-            pinhead = await self.bot.get_or_fetch_user(246291288775852033)
-            await pinhead.send(embed=embed)
-            raise error
+            print("idk yet")
         
+        db = self.bot.db
+        sql = ("INSERT INTO statuses(type, statustext)")
+        val = (type, statustext)
+        await db.execute(sql, val)
+        type_cache.append(type)
+        statustext_cache.append(statustext)
+
 def setup(bot):
     bot.add_cog(Statuses(bot))

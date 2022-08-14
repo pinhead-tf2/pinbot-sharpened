@@ -6,6 +6,12 @@ class Core(commands.Cog):
         self.bot = bot
         print("Core initialized")
         
+    @commands.command(help="Shuts down the bot. Only usable by the owner to safely shut down the bot during debug.")
+    @commands.is_owner()
+    async def shutdown(self, ctx):
+        await ctx.message.add_reaction("<:pyroThumbsUp:1008410805957566514>")
+        await self.bot.close()
+        
     @commands.command(help="Show's the the bot's response time.")
     @commands.cooldown(1, 5, commands.BucketType.guild)
     async def ping(self, ctx):
@@ -52,7 +58,7 @@ class Core(commands.Cog):
         embed.add_field(name='Current Uptime: {}'.format(datetime.timedelta(seconds=int(uptime))), value='**Startup Time:** {}\n**Reboot Status:** {}'.format(int(self.bot.startTime), rating), inline=False)
         return await ctx.reply(embed=embed)
         
-    @commands.command(help="Tells you a lot of info about the bot.")
+    @commands.command(help="Tells you a lot of info about the bot and it's host.")
     @commands.cooldown(1, 30, commands.BucketType.guild)
     async def info(self, ctx):
         start = time.time()
@@ -74,32 +80,9 @@ class Core(commands.Cog):
         memorystring = "**Memory:** {}MB/{}MB ({}% Used | {} MB Free)".format(used, total, memory.percent, available)
         # EMBED
         embed.add_field(name="Host Computer", value="{}\n{}\n{}\n".format(osstring, cpustring, memorystring), inline=False)
+        msg = await ctx.reply(embed=embed)
         embed.set_footer(text='Response Time: {} seconds'.format(round(time.time()-start, 3)))
-        return await ctx.reply(embed=embed)
-    
-    @commands.Cog.listener()
-    async def on_command_error(self, ctx: commands.Context, error: commands.CommandError):
-        if isinstance(error, commands.CommandOnCooldown):
-            embed = discord.Embed(title="Command Execution Error", color=0xff0000)
-            embed.add_field(name="Cooldown Isn't Expired", value="The command `{}` is still on cooldown! You have to wait **{} more seconds** before using this command. ({} second cooldown)".format(ctx.command, round(error.retry_after, 1), ctx.command.cooldown.per))
-            embed.set_footer(text=str(error))
-            return await ctx.reply(embed=embed)
-        else:
-            embed = discord.Embed(title="Command Execution Error", color=0xff0000)
-            embed.add_field(name="Unhandled Error", value="Whoops, looks like pinhead hasn't yet coded an exception for this kind of error! I've notified him, so please be patient on waiting for a bug fix!")
-            embed.set_footer(text=str(error))
-            await ctx.reply(embed=embed)
-            embed = discord.Embed(title="Command Execution Error - DM Report", color=0xff0000)
-            embed.add_field(name="New Unhandled Error", value="**Command:** {}\n**Ran by:** {} ({})\n**Error Type:** `{}`\n**Link:** {}".format(
-                ctx.command,
-                ctx.author.mention,
-                ctx.author.name + "#" + ctx.author.discriminator,
-                str(error),
-                ctx.message.jump_url
-            ))
-            pinhead = await self.bot.get_or_fetch_user(246291288775852033)
-            await pinhead.send(embed=embed)
-            raise error
+        return await msg.edit(embed=embed)
 
 def setup(bot):
     bot.add_cog(Core(bot))
