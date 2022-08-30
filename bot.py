@@ -17,6 +17,7 @@ bot = commands.Bot(
     status=discord.Status.dnd, 
     activity=discord.Game(name="Initializing...")
 )
+bot.advancedUsers = [246291288775852033, 748213843615809608]
 bot.startTime = time.time()
 bot.version = 'Indev'
 bot.releaseDate = 'Undetermined'
@@ -37,7 +38,7 @@ async def on_ready():
         print("{} ({}) is ready\nTime to ready: {}".format(bot.user, bot.user.id, round(time.time() - bot.startTime, 3)))
  
 @bot.event
-async def on_command_error(ctx: commands.Context, error: commands.CommandError):
+async def on_command_error(ctx: commands.Context, error):
     embed = discord.Embed(title="Command Execution Error", color=0xF04747) 
     if isinstance(error, commands.CommandNotFound):
         return
@@ -47,13 +48,13 @@ async def on_command_error(ctx: commands.Context, error: commands.CommandError):
         embed.add_field(name="Cooldown Isn't Expired", value="The command `{}` is still on cooldown! You have to wait **{} more seconds** before using this command. ({} second cooldown)".format(ctx.command, round(error.retry_after, 1), ctx.command.cooldown.per))
         embed.set_footer(text='commands.CommandOnCooldown')
     elif isinstance(error, commands.MemberNotFound):
-        embed.add_field(name="Member Not Found", value="The server member `({})` you supplied for the command `{}` couldn't be found. You can use any of the following to find a server member: `userid | mention | name#tag | name | nickname`".format(ctx.args[2], ctx.command))
+        embed.add_field(name="Member Not Found", value="The server member `({})` you supplied for the command `{}` couldn't be found. You can use any of the following to find a server member: `userid | mention | name#tag | name | nickname`".format(error.argument, ctx.command))
         embed.set_footer(text='commands.MemberNotFound')
     elif isinstance(error, commands.UserNotFound):
-        embed.add_field(name="User Not Found", value="The Discord user `({})` you supplied for the command `{}` couldn't be found. You can use any of the following to find a user: `userid | mention | name#tag | name`".format(ctx.args[2], ctx.command))
+        embed.add_field(name="User Not Found", value="The Discord user `({})` you supplied for the command `{}` couldn't be found. You can use any of the following to find a user: `userid | mention | name#tag | name`".format(error.argument, ctx.command))
         embed.set_footer(text='commands.UserNotFound')
     elif isinstance(error, commands.BadArgument):
-        embed.add_field(name="Invalid Command Input", value="The input `{}` for the command `{}` was invalid. Consider checking the help tooltip for that command to see what works.".format(ctx.args[2], ctx.command))
+        embed.add_field(name="Invalid Command Input", value="The input `{}` for the command `{}` was invalid. Consider checking the help tooltip for that command to see what works.".format(error.args, ctx.command))
         embed.set_footer(text='commands.BadArgument')
     else:
         embed = discord.Embed(title="Critical Command Execution Error", color=0xff0000)
@@ -100,6 +101,14 @@ class helpMe(commands.HelpCommand):
             embed.add_field(name="Aliases", value=", ".join(alias), inline=False)
         channel = self.get_destination()
         return await channel.send(embed=embed)
+
+@bot.command(help="Reloads a cog. Only usable by advanced users.")
+async def reload(ctx, cogName):
+    try:
+        bot.reload_extension(f'modules.{cogName}.{cogName}')
+        await ctx.reply(f"Reloaded `modules.{cogName}.{cogName}`")
+    except:
+        await ctx.reply(f"Failed to load `modules.{cogName}.{cogName}`")
 
 cogs_list = [
     'Core.Core',

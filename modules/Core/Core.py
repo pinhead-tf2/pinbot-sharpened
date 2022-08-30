@@ -4,7 +4,6 @@ from discord.ext import commands
 class Core(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        print("Core initialized")
         
     @commands.command(help="Shuts down the bot. Only usable by the owner to safely shut down the bot during debug.")
     @commands.is_owner()
@@ -86,3 +85,7 @@ class Core(commands.Cog):
 
 def setup(bot):
     bot.add_cog(Core(bot))
+    print('Core loaded')
+    
+def teardown(bot):
+    print('Core unloaded')

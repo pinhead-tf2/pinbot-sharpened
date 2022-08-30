@@ -7,7 +7,6 @@ statustext_cache = []
 class Statuses(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        print("Statuses initialized")
         self.statusLoop.start()
         
     def cog_unload(self):
@@ -23,11 +22,11 @@ class Statuses(commands.Cog):
         db = self.bot.db
         db.row_factory = aiosqlite.Row
         async with db.execute("SELECT * FROM statuses") as cursor:
-            print(cursor.fetchone())
+            print(await cursor.fetchone())
             
     @commands.command(help="Adds a status to the bot's status database. Only usable by the owner.")
-    @commands.is_owner()
-    async def addstatus(self, ctx, type, *, statustext):
+    # @commands.is_owner()
+    async def addstatus(self, ctx, type, *statustext):
         type = type.lower()
         if type == "playing":
             type = discord.ActivityType.playing
@@ -39,11 +38,19 @@ class Statuses(commands.Cog):
             print("idk yet")
         
         db = self.bot.db
-        sql = ("INSERT INTO statuses(type, statustext)")
-        val = (type, statustext)
-        await db.execute(sql, val)
+        cursor = await db.cursor()
+        await cursor.execute(f"INSERT INTO statuses(type, statustext) VALUES(?, ?)", (type, statustext))
         type_cache.append(type)
         statustext_cache.append(statustext)
+        embed = discord.Embed(title="New Status Added", color=0x43B581)
+        embed.add_field(name="Activity Type", value="{}".format(type), inline=False)
+        embed.add_field(name="Activity Text", value="{}".format(statustext), inline=False)
+        embed.set_footer(text="Status ID: {}".format(cursor.lastrowid()))
+        await ctx.reply(embed=embed)
 
 def setup(bot):
     bot.add_cog(Statuses(bot))
+    print("Statuses loaded")
+    
+def teardown(bot):
+    print('Statuses unloaded')

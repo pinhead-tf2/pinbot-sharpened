@@ -5,7 +5,6 @@ from discord.ext import commands
 class Helpful(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
-        print("Helpful initialized")
         
     @commands.command(help="Gives you the profile picture of a user. Returns yours if left blank.", aliases=['pfp'])
     @commands.cooldown(1, 5, commands.BucketType.guild)
@@ -41,3 +40,7 @@ class Helpful(commands.Cog):
         
 def setup(bot):
     bot.add_cog(Helpful(bot))
+    print("Helpful loaded")
+    
+def teardown(bot):
+    print('Helpful unloaded')
