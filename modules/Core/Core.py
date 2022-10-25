@@ -70,7 +70,9 @@ class Core(commands.Cog):
         osstring = "**OS:** {} {} ({})".format(pc.system, pc.release, pc.version)
         # CPU
         cpu = cpuinfo.get_cpu_info()
-        cpustring = "**CPU Model:** {} ({} Cores | {}% Load)".format(cpu['brand_raw'], cpu['count'], psutil.cpu_percent())
+        cpustring = "**CPU Model:** {} ({} GHz | {}% Load)".format(cpu['brand_raw'],
+                                                               round(float(cpu['hz_advertised_friendly'][0:6]), 1), # this was so messy but fuck it
+                                                               psutil.cpu_percent())
         # Mem
         memory = psutil.virtual_memory()
         available = round(memory.available/1024.0/1024.0,1)

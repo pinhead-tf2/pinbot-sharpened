@@ -1,6 +1,6 @@
-from socket import timeout
 import discord, datetime, asyncio
 from discord.ext import commands
+
 
 class Helpful(commands.Cog):
     def __init__(self, bot):

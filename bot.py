@@ -113,7 +113,8 @@ async def reload(ctx, cogName):
 cogs_list = [
     'Core.Core',
     'Helpful.Helpful',
-    'Statuses.Statuses'
+    'Statuses.Statuses',
+    'Memes.Memes'
 ]
 
 for cog in cogs_list:
